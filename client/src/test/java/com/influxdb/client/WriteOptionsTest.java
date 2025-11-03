@@ -45,8 +45,10 @@ class WriteOptionsTest {
         Assertions.assertThat(writeOptions.getMaxRetryTime()).isEqualTo(180_000);
         Assertions.assertThat(writeOptions.getMaxRetryDelay()).isEqualTo(125_000);
         Assertions.assertThat(writeOptions.getExponentialBase()).isEqualTo(2);
+        Assertions.assertThat(writeOptions.getConcatMapPrefetch()).isEqualTo(2);
         Assertions.assertThat(writeOptions.getWriteScheduler()).isEqualTo(Schedulers.newThread());
         Assertions.assertThat(writeOptions.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_OLDEST);
+        Assertions.assertThat(writeOptions.getCaptureBackpressureData()).isFalse();
     }
 
     @Test
@@ -61,8 +63,10 @@ class WriteOptionsTest {
                 .maxRetries(5)
                 .maxRetryDelay(250_123)
                 .exponentialBase(2)
+                .concatMapPrefetch(5)
                 .writeScheduler(Schedulers.computation())
                 .backpressureStrategy(BackpressureOverflowStrategy.ERROR)
+                .captureBackpressureData(true)
                 .build();
 
         Assertions.assertThat(writeOptions.getBatchSize()).isEqualTo(10_000);
@@ -73,7 +77,81 @@ class WriteOptionsTest {
         Assertions.assertThat(writeOptions.getMaxRetries()).isEqualTo(5);
         Assertions.assertThat(writeOptions.getMaxRetryDelay()).isEqualTo(250_123);
         Assertions.assertThat(writeOptions.getExponentialBase()).isEqualTo(2);
+        Assertions.assertThat(writeOptions.getConcatMapPrefetch()).isEqualTo(5);
         Assertions.assertThat(writeOptions.getWriteScheduler()).isEqualTo(Schedulers.computation());
         Assertions.assertThat(writeOptions.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.ERROR);
+        Assertions.assertThat(writeOptions.getCaptureBackpressureData()).isTrue();
+    }
+
+    @Test
+    void concatMapPrefetchValidation() {
+        // Test that concatMapPrefetch must be positive
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().concatMapPrefetch(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("concatMapPrefetch");
+
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().concatMapPrefetch(-1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("concatMapPrefetch");
+
+        // Test that positive values work
+        WriteOptions options1 = WriteOptions.builder().concatMapPrefetch(1).build();
+        Assertions.assertThat(options1.getConcatMapPrefetch()).isEqualTo(1);
+
+        WriteOptions options10 = WriteOptions.builder().concatMapPrefetch(10).build();
+        Assertions.assertThat(options10.getConcatMapPrefetch()).isEqualTo(10);
+    }
+
+    @Test
+    void captureBackpressureDataConfiguration() {
+        // Test default value
+        WriteOptions defaultOptions = WriteOptions.builder().build();
+        Assertions.assertThat(defaultOptions.getCaptureBackpressureData()).isFalse();
+
+        // Test explicit configuration
+        WriteOptions enabledOptions = WriteOptions.builder()
+                .captureBackpressureData(true)
+                .build();
+        Assertions.assertThat(enabledOptions.getCaptureBackpressureData()).isTrue();
+
+        WriteOptions disabledOptions = WriteOptions.builder()
+                .captureBackpressureData(false)
+                .build();
+        Assertions.assertThat(disabledOptions.getCaptureBackpressureData()).isFalse();
+    }
+
+    @Test
+    void backpressureConfiguration() {
+        // Test that backpressure options can be configured together
+        WriteOptions options = WriteOptions.builder()
+                .batchSize(100)
+                .bufferLimit(500)
+                .backpressureStrategy(BackpressureOverflowStrategy.DROP_LATEST)
+                .captureBackpressureData(true)
+                .build();
+
+        Assertions.assertThat(options.getBatchSize()).isEqualTo(100);
+        Assertions.assertThat(options.getBufferLimit()).isEqualTo(500);
+        Assertions.assertThat(options.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_LATEST);
+        Assertions.assertThat(options.getCaptureBackpressureData()).isTrue();
+    }
+
+    @Test
+    void backpressureStrategies() {
+        // Test different backpressure strategies
+        WriteOptions dropOldest = WriteOptions.builder()
+                .backpressureStrategy(BackpressureOverflowStrategy.DROP_OLDEST)
+                .build();
+        Assertions.assertThat(dropOldest.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_OLDEST);
+
+        WriteOptions dropLatest = WriteOptions.builder()
+                .backpressureStrategy(BackpressureOverflowStrategy.DROP_LATEST)
+                .build();
+        Assertions.assertThat(dropLatest.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_LATEST);
+
+        WriteOptions error = WriteOptions.builder()
+                .backpressureStrategy(BackpressureOverflowStrategy.ERROR)
+                .build();
+        Assertions.assertThat(error.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.ERROR);
     }
 }

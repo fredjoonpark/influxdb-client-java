@@ -36,14 +36,14 @@
         <module>client-core</module>
         <module>client-legacy</module>
         <module>client</module>
-        <module>client-reactive</module>
+        <!-- <module>client-reactive</module>
         <module>client-kotlin</module>
         <module>client-scala/cross/2.12</module>
-        <module>client-scala/cross/2.13</module>
-        <module>client-osgi</module>
-        <module>karaf</module>
-        <module>spring</module>
-        <module>flux-dsl</module>
+        <module>client-scala/cross/2.13</module> -->
+        <!-- <module>client-osgi</module> -->
+        <!-- <module>karaf</module> -->
+        <!-- <module>spring</module> -->
+        <!-- <module>flux-dsl</module> -->
         <module>examples</module>
     </modules>
 

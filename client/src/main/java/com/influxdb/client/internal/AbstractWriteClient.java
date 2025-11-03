@@ -114,7 +114,12 @@ public abstract class AbstractWriteClient extends AbstractRestClient implements 
                 //
                 .onBackpressureBuffer(
                         writeOptions.getBufferLimit(),
-                        () -> publish(new BackpressureEvent(BackpressureEvent.BackpressureReason.FAST_EMITTING)),
+                        () -> {
+                            LOG.warning("🔴 FIRST BUFFER OVERFLOW - Individual points being dropped!");
+                            LOG.warning("   Buffer limit: " + writeOptions.getBufferLimit() + " points");
+                            LOG.warning("   Strategy: " + writeOptions.getBackpressureStrategy());
+                            publish(new BackpressureEvent(BackpressureEvent.BackpressureReason.FAST_EMITTING));
+                        },
                         writeOptions.getBackpressureStrategy())
                 //
                 // Group by Bucket, Org, Precision, Consistency
@@ -159,14 +164,21 @@ public abstract class AbstractWriteClient extends AbstractRestClient implements 
                 //
                 // Add backpressure strategy to cover outage of the server
                 //
+                .doOnNext(batch -> LOG
+                        .info("🎯 BATCH ENTERING BACKPRESSURE BUFFER: " + batch.toLineProtocol().replace("\n", " | ")))
                 .lift(new BackpressureBatchesBufferStrategy(
                         writeOptions.getBufferLimit(),
-                        () -> publish(new BackpressureEvent(BackpressureEvent.BackpressureReason.TOO_MUCH_BATCHES)),
-                        writeOptions.getBackpressureStrategy()))
+                        bufferedPoints -> publish(new BackpressureEvent(
+                                BackpressureEvent.BackpressureReason.TOO_MUCH_BATCHES, bufferedPoints)),
+                        writeOptions.getBackpressureStrategy(),
+                        writeOptions.getCaptureBackpressureData()))
+                .doOnNext(batch -> LOG
+                        .info("🎪 BATCH EXITING BACKPRESSURE BUFFER: " + batch.toLineProtocol().replace("\n", " | ")))
                 //
-                // Use concat to process batches one by one
+                // Use concat to process batches with configurable prefetch
                 //
-                .concatMapMaybe(new ToWritePointsMaybe(processorScheduler, writeOptions))
+                .concatMapMaybe(new ToWritePointsMaybe(processorScheduler, writeOptions),
+                        writeOptions.getConcatMapPrefetch())
                 .doFinally(() -> finished.set(true))
                 .subscribe(responseNotification -> {
 

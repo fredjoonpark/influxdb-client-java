@@ -610,7 +610,9 @@ The writes are processed in batches which are configurable by `WriteOptions`:
 | **maxRetryTime** | maximum total retry timeout in milliseconds | 180_000 |
 | **exponentialBase** | the base for the exponential retry delay, the next delay is computed using random exponential backoff as a random value within the interval  ``retryInterval * exponentialBase^(attempts-1)`` and ``retryInterval * exponentialBase^(attempts)``. Example for ``retryInterval=5_000, exponentialBase=2, maxRetryDelay=125_000, total=5`` Retry delays are random distributed values within the ranges of ``[5_000-10_000, 10_000-20_000, 20_000-40_000, 40_000-80_000, 80_000-125_000]``
 | **bufferLimit** | the maximum number of unwritten stored points | 10000 |
+| **concatMapPrefetch** | the number of upstream items to prefetch for the concatMapMaybe operator | 2 |
 | **backpressureStrategy** | the strategy to deal with buffer overflow | DROP_OLDEST |
+| **captureBackpressureData** | whether to capture affected data points in backpressure events | false |
 
 #### Backpressure
 The backpressure presents the problem of what to do with a growing backlog of unconsumed data points. 
@@ -637,6 +639,41 @@ writeApi.listenEvents(BackpressureEvent.class, value -> {
     //
     // slowdown producers
     //...
+});
+```
+
+##### Backpressure Event Data Snapshots
+
+When backpressure occurs, enable `captureBackpressureData` to preserve a snapshot of the affected data points from the `BackpressureEvent`. The content of this snapshot depends on the configured backpressure strategy:
+
+- **`DROP_OLDEST` strategy**: The snapshot contains only the data points that will be dropped (the oldest points in the buffer). This allows you to log, persist, or handle the specific data that is being lost due to backpressure.
+
+- **`DROP_LATEST` strategy**: The snapshot contains only the newest data points that are being added to the buffer. This represents the most recent data that triggered the backpressure condition.
+
+**Example: Logging dropped data points**
+```java
+WriteOptions writeOptions = WriteOptions.builder()
+    .backpressureStrategy(BackpressureOverflowStrategy.DROP_OLDEST)
+    .bufferLimit(1000)
+    .captureBackpressureData(true)  // Enable data capture
+    .build();
+
+WriteApi writeApi = influxDBClient.getWriteApi(writeOptions);
+
+writeApi.listenEvents(BackpressureEvent.class, backpressureEvent -> {
+    List<String> affectedPoints = backpressureEvent.getBufferedLineProtocol();
+
+    if (backpressureEvent.getReason() == BackpressureEvent.BackpressureReason.TOO_MUCH_BATCHES) {
+        // Log the specific points that were affected by backpressure
+        logger.warn("Backpressure occurred. Affected {} data points:", affectedPoints.size());
+
+        // For DROP_OLDEST: these are the points that were dropped from the buffer
+        // For DROP_LATEST: these are the newest points that triggered the condition
+        affectedPoints.forEach(point -> logger.debug("Affected point: {}", point));
+
+        // Do something with affected points ie. requeue for retry
+        doSomething(affectedPoints);
+    }
 });
 ```
 
