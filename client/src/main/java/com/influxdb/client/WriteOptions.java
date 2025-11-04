@@ -329,7 +329,7 @@ public final class WriteOptions implements WriteApi.RetryOptions {
          */
         @Nonnull
         public Builder maxRetries(final int maxRetries) {
-            Arguments.checkPositiveNumber(maxRetries, "maxRetries");
+            Arguments.checkNotNegativeNumber(maxRetries, "maxRetries");
             this.maxRetries = maxRetries;
             return this;
         }
@@ -368,7 +368,9 @@ public final class WriteOptions implements WriteApi.RetryOptions {
          */
         @Nonnull
         public Builder exponentialBase(final int exponentialBase) {
-            Arguments.checkPositiveNumber(exponentialBase, "exponentialBase");
+            if (exponentialBase < 2) {
+                throw new IllegalArgumentException("Expecting a number >= 2 for exponentialBase");
+            }
             this.exponentialBase = exponentialBase;
             return this;
         }
@@ -383,7 +385,7 @@ public final class WriteOptions implements WriteApi.RetryOptions {
          */
         @Nonnull
         public Builder bufferLimit(final int bufferLimit) {
-            Arguments.checkNotNegativeNumber(bufferLimit, "bufferLimit");
+            Arguments.checkPositiveNumber(bufferLimit, "bufferLimit");
             this.bufferLimit = bufferLimit;
             return this;
         }

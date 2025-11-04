@@ -172,7 +172,6 @@ public final class BackpressureBatchesBufferStrategy implements
                         Exceptions.throwIfFatal(ex);
                         upstream.cancel();
                         onError(ex);
-                        return;
                     }
                 }
             } else if (callError) {
@@ -185,7 +184,6 @@ public final class BackpressureBatchesBufferStrategy implements
 
         /**
          * Captures snapshot of a single batch item for overflow handling.
-         * Used by both DROP_LATEST and DROP_OLDEST strategies.
          *
          * @param item the batch item to capture
          * @return list of line protocol points from the item

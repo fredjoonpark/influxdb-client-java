@@ -84,40 +84,277 @@ class WriteOptionsTest {
     }
 
     @Test
+    void batchSizeEdgeCases() {
+        // Minimum valid batch size (1)
+        WriteOptions minBatch = WriteOptions.builder().batchSize(1).build();
+        Assertions.assertThat(minBatch.getBatchSize()).isEqualTo(1);
+
+        // Zero batch size should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().batchSize(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("batchSize");
+
+        // Negative batch size should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().batchSize(-1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("batchSize");
+
+        // Very large batch size
+        WriteOptions largeBatch = WriteOptions.builder().batchSize(Integer.MAX_VALUE).build();
+        Assertions.assertThat(largeBatch.getBatchSize()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    void bufferLimitEdgeCases() {
+        // Minimum valid buffer limit (1)
+        WriteOptions minBuffer = WriteOptions.builder().bufferLimit(1).build();
+        Assertions.assertThat(minBuffer.getBufferLimit()).isEqualTo(1);
+
+        // Zero buffer limit should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().bufferLimit(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("bufferLimit");
+
+        // Negative buffer limit should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().bufferLimit(-100).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("bufferLimit");
+
+        // Very large buffer limit
+        WriteOptions largeBuffer = WriteOptions.builder().bufferLimit(Integer.MAX_VALUE).build();
+        Assertions.assertThat(largeBuffer.getBufferLimit()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    void flushIntervalEdgeCases() {
+        // Minimum valid flush interval (1ms)
+        WriteOptions minFlush = WriteOptions.builder().flushInterval(1).build();
+        Assertions.assertThat(minFlush.getFlushInterval()).isEqualTo(1);
+
+        // Zero flush interval should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().flushInterval(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("flushInterval");
+
+        // Negative flush interval should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().flushInterval(-500).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("flushInterval");
+
+        // Very large flush interval
+        WriteOptions largeFlush = WriteOptions.builder().flushInterval(Integer.MAX_VALUE).build();
+        Assertions.assertThat(largeFlush.getFlushInterval()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    void jitterIntervalEdgeCases() {
+        // Zero jitter interval is valid (no jitter)
+        WriteOptions noJitter = WriteOptions.builder().jitterInterval(0).build();
+        Assertions.assertThat(noJitter.getJitterInterval()).isEqualTo(0);
+
+        // Negative jitter interval should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().jitterInterval(-1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("jitterInterval");
+
+        // Very large jitter interval
+        WriteOptions largeJitter = WriteOptions.builder().jitterInterval(Integer.MAX_VALUE).build();
+        Assertions.assertThat(largeJitter.getJitterInterval()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    void retryIntervalEdgeCases() {
+        // Minimum valid retry interval (1ms)
+        WriteOptions minRetry = WriteOptions.builder().retryInterval(1).build();
+        Assertions.assertThat(minRetry.getRetryInterval()).isEqualTo(1);
+
+        // Zero retry interval should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().retryInterval(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("retryInterval");
+
+        // Negative retry interval should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().retryInterval(-1000).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("retryInterval");
+    }
+
+    @Test
+    void maxRetriesEdgeCases() {
+        // Zero retries (no retry)
+        WriteOptions noRetry = WriteOptions.builder().maxRetries(0).build();
+        Assertions.assertThat(noRetry.getMaxRetries()).isEqualTo(0);
+
+        // Negative retries should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().maxRetries(-1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxRetries");
+
+        // Very large number of retries
+        WriteOptions manyRetries = WriteOptions.builder().maxRetries(1000).build();
+        Assertions.assertThat(manyRetries.getMaxRetries()).isEqualTo(1000);
+    }
+
+    @Test
+    void maxRetryDelayEdgeCases() {
+        // Minimum valid retry delay (1ms)
+        WriteOptions minDelay = WriteOptions.builder().maxRetryDelay(1).build();
+        Assertions.assertThat(minDelay.getMaxRetryDelay()).isEqualTo(1);
+
+        // Zero retry delay should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().maxRetryDelay(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxRetryDelay");
+
+        // Negative retry delay should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().maxRetryDelay(-5000).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxRetryDelay");
+    }
+
+    @Test
+    void exponentialBaseEdgeCases() {
+        // Minimum valid exponential base (2)
+        WriteOptions minBase = WriteOptions.builder().exponentialBase(2).build();
+        Assertions.assertThat(minBase.getExponentialBase()).isEqualTo(2);
+
+        // Base of 1 should throw exception (no exponential growth)
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().exponentialBase(1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("exponentialBase");
+
+        // Base less than 2 should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().exponentialBase(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("exponentialBase");
+
+        // Negative base should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().exponentialBase(-2).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("exponentialBase");
+
+        // Large exponential base
+        WriteOptions largeBase = WriteOptions.builder().exponentialBase(10).build();
+        Assertions.assertThat(largeBase.getExponentialBase()).isEqualTo(10);
+    }
+
+    @Test
+    void concatMapPrefetchEdgeCases() {
+        // Minimum valid prefetch (1)
+        WriteOptions minPrefetch = WriteOptions.builder().concatMapPrefetch(1).build();
+        Assertions.assertThat(minPrefetch.getConcatMapPrefetch()).isEqualTo(1);
+
+        // Negative prefetch should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().concatMapPrefetch(-5).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("concatMapPrefetch");
+
+        // Very large prefetch
+        WriteOptions largePrefetch = WriteOptions.builder().concatMapPrefetch(1000).build();
+        Assertions.assertThat(largePrefetch.getConcatMapPrefetch()).isEqualTo(1000);
+    }
+
+    @Test
+    void allBackpressureStrategies() {
+        // Test all available backpressure strategies
+        for (BackpressureOverflowStrategy strategy : BackpressureOverflowStrategy.values()) {
+            WriteOptions options = WriteOptions.builder()
+                    .backpressureStrategy(strategy)
+                    .build();
+            Assertions.assertThat(options.getBackpressureStrategy()).isEqualTo(strategy);
+        }
+    }
+
+    @Test
+    void combinationOfMinimumValues() {
+        // Test valid minimum values for all settings
+        WriteOptions options = WriteOptions.builder()
+                .batchSize(1)
+                .bufferLimit(1)
+                .flushInterval(1)
+                .jitterInterval(0)
+                .retryInterval(1)
+                .maxRetries(0)
+                .maxRetryDelay(1)
+                .exponentialBase(2)
+                .concatMapPrefetch(1)
+                .build();
+
+        Assertions.assertThat(options.getBatchSize()).isEqualTo(1);
+        Assertions.assertThat(options.getBufferLimit()).isEqualTo(1);
+        Assertions.assertThat(options.getFlushInterval()).isEqualTo(1);
+        Assertions.assertThat(options.getJitterInterval()).isEqualTo(0);
+        Assertions.assertThat(options.getRetryInterval()).isEqualTo(1);
+        Assertions.assertThat(options.getMaxRetries()).isEqualTo(0);
+        Assertions.assertThat(options.getMaxRetryDelay()).isEqualTo(1);
+        Assertions.assertThat(options.getExponentialBase()).isEqualTo(2);
+        Assertions.assertThat(options.getConcatMapPrefetch()).isEqualTo(1);
+    }
+
+    @Test
+    void bufferLimitSmallerThanBatchSize() {
+        // Buffer limit can be smaller than batch size (valid configuration)
+        WriteOptions options = WriteOptions.builder()
+                .batchSize(1000)
+                .bufferLimit(500)
+                .build();
+
+        Assertions.assertThat(options.getBatchSize()).isEqualTo(1000);
+        Assertions.assertThat(options.getBufferLimit()).isEqualTo(500);
+    }
+
+    @Test
+    void maxRetryTimeBoundaries() {
+        // Test maxRetryTime edge cases
+        WriteOptions minTime = WriteOptions.builder().maxRetryTime(1).build();
+        Assertions.assertThat(minTime.getMaxRetryTime()).isEqualTo(1);
+
+        // Zero max retry time should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().maxRetryTime(0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxRetryTime");
+
+        // Negative max retry time should throw exception
+        Assertions.assertThatThrownBy(() -> WriteOptions.builder().maxRetryTime(-1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxRetryTime");
+
+        // Very large max retry time
+        WriteOptions largeTime = WriteOptions.builder().maxRetryTime(Integer.MAX_VALUE).build();
+        Assertions.assertThat(largeTime.getMaxRetryTime()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    void captureBackpressureDataBothStates() {
+        // Test both true and false states
+        WriteOptions captureTrue = WriteOptions.builder().captureBackpressureData(true).build();
+        Assertions.assertThat(captureTrue.getCaptureBackpressureData()).isTrue();
+
+        WriteOptions captureFalse = WriteOptions.builder().captureBackpressureData(false).build();
+        Assertions.assertThat(captureFalse.getCaptureBackpressureData()).isFalse();
+    }
+
+    @Test
+    void multipleBuilderCalls() {
+        // Test that builder can be reused and values overridden
+        WriteOptions.Builder builder = WriteOptions.builder();
+        
+        builder.batchSize(100);
+        builder.batchSize(200); // Override
+        
+        WriteOptions options = builder.build();
+        Assertions.assertThat(options.getBatchSize()).isEqualTo(200);
+    }
+
+    @Test
     void concatMapPrefetchValidation() {
         // Test that concatMapPrefetch must be positive
         Assertions.assertThatThrownBy(() -> WriteOptions.builder().concatMapPrefetch(0).build())
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("concatMapPrefetch");
 
-        Assertions.assertThatThrownBy(() -> WriteOptions.builder().concatMapPrefetch(-1).build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("concatMapPrefetch");
-
-        // Test that positive values work
-        WriteOptions options1 = WriteOptions.builder().concatMapPrefetch(1).build();
-        Assertions.assertThat(options1.getConcatMapPrefetch()).isEqualTo(1);
-
         WriteOptions options10 = WriteOptions.builder().concatMapPrefetch(10).build();
         Assertions.assertThat(options10.getConcatMapPrefetch()).isEqualTo(10);
-    }
-
-    @Test
-    void captureBackpressureDataConfiguration() {
-        // Test default value
-        WriteOptions defaultOptions = WriteOptions.builder().build();
-        Assertions.assertThat(defaultOptions.getCaptureBackpressureData()).isFalse();
-
-        // Test explicit configuration
-        WriteOptions enabledOptions = WriteOptions.builder()
-                .captureBackpressureData(true)
-                .build();
-        Assertions.assertThat(enabledOptions.getCaptureBackpressureData()).isTrue();
-
-        WriteOptions disabledOptions = WriteOptions.builder()
-                .captureBackpressureData(false)
-                .build();
-        Assertions.assertThat(disabledOptions.getCaptureBackpressureData()).isFalse();
     }
 
     @Test
@@ -134,24 +371,5 @@ class WriteOptionsTest {
         Assertions.assertThat(options.getBufferLimit()).isEqualTo(500);
         Assertions.assertThat(options.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_LATEST);
         Assertions.assertThat(options.getCaptureBackpressureData()).isTrue();
-    }
-
-    @Test
-    void backpressureStrategies() {
-        // Test different backpressure strategies
-        WriteOptions dropOldest = WriteOptions.builder()
-                .backpressureStrategy(BackpressureOverflowStrategy.DROP_OLDEST)
-                .build();
-        Assertions.assertThat(dropOldest.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_OLDEST);
-
-        WriteOptions dropLatest = WriteOptions.builder()
-                .backpressureStrategy(BackpressureOverflowStrategy.DROP_LATEST)
-                .build();
-        Assertions.assertThat(dropLatest.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.DROP_LATEST);
-
-        WriteOptions error = WriteOptions.builder()
-                .backpressureStrategy(BackpressureOverflowStrategy.ERROR)
-                .build();
-        Assertions.assertThat(error.getBackpressureStrategy()).isEqualTo(BackpressureOverflowStrategy.ERROR);
     }
 }
