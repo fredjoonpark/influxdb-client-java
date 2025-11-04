@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.reactivex.rxjava3.core.BackpressureOverflowStrategy.DROP_OLDEST;
 
-/**dd
+/**
  * @author Jakub Bednar (bednar@github) (29/06/2022 07:54)
  */
 class BackpressureBatchesBufferStrategyTest {

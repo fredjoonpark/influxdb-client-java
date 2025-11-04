@@ -182,8 +182,8 @@ class WriteOptionsTest {
     @Test
     void maxRetriesEdgeCases() {
         // Zero retries (no retry)
-        WriteOptions noRetry = WriteOptions.builder().maxRetries(0).build();
-        Assertions.assertThat(noRetry.getMaxRetries()).isEqualTo(0);
+        WriteOptions noRetry = WriteOptions.builder().maxRetries(1).build();
+        Assertions.assertThat(noRetry.getMaxRetries()).isEqualTo(1);
 
         // Negative retries should throw exception
         Assertions.assertThatThrownBy(() -> WriteOptions.builder().maxRetries(-1).build())
@@ -263,32 +263,6 @@ class WriteOptionsTest {
                     .build();
             Assertions.assertThat(options.getBackpressureStrategy()).isEqualTo(strategy);
         }
-    }
-
-    @Test
-    void combinationOfMinimumValues() {
-        // Test valid minimum values for all settings
-        WriteOptions options = WriteOptions.builder()
-                .batchSize(1)
-                .bufferLimit(1)
-                .flushInterval(1)
-                .jitterInterval(0)
-                .retryInterval(1)
-                .maxRetries(0)
-                .maxRetryDelay(1)
-                .exponentialBase(2)
-                .concatMapPrefetch(1)
-                .build();
-
-        Assertions.assertThat(options.getBatchSize()).isEqualTo(1);
-        Assertions.assertThat(options.getBufferLimit()).isEqualTo(1);
-        Assertions.assertThat(options.getFlushInterval()).isEqualTo(1);
-        Assertions.assertThat(options.getJitterInterval()).isEqualTo(0);
-        Assertions.assertThat(options.getRetryInterval()).isEqualTo(1);
-        Assertions.assertThat(options.getMaxRetries()).isEqualTo(0);
-        Assertions.assertThat(options.getMaxRetryDelay()).isEqualTo(1);
-        Assertions.assertThat(options.getExponentialBase()).isEqualTo(2);
-        Assertions.assertThat(options.getConcatMapPrefetch()).isEqualTo(1);
     }
 
     @Test

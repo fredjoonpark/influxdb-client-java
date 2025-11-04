@@ -329,7 +329,7 @@ public final class WriteOptions implements WriteApi.RetryOptions {
          */
         @Nonnull
         public Builder maxRetries(final int maxRetries) {
-            Arguments.checkNotNegativeNumber(maxRetries, "maxRetries");
+            Arguments.checkPositiveNumber(maxRetries, "maxRetries");
             this.maxRetries = maxRetries;
             return this;
         }
