@@ -2,7 +2,10 @@ package com.influxdb.client.internal.flowable;
 
 import java.util.Collections;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -35,20 +38,20 @@ public final class BackpressureBatchesBufferStrategy implements
 
     final long bufferSize;
 
-    final Consumer<java.util.List<String>> onOverflow;
+    final Consumer<List<String>> onOverflow;
 
     final BackpressureOverflowStrategy strategy;
 
     final boolean captureBackpressureData;
 
     public BackpressureBatchesBufferStrategy(long bufferSize,
-            Consumer<java.util.List<String>> onOverflow,
+            Consumer<List<String>> onOverflow,
             BackpressureOverflowStrategy strategy) {
         this(bufferSize, onOverflow, strategy, false);
     }
 
     public BackpressureBatchesBufferStrategy(long bufferSize,
-            Consumer<java.util.List<String>> onOverflow,
+            Consumer<List<String>> onOverflow,
             BackpressureOverflowStrategy strategy,
             boolean captureBackpressureData) {
         this.bufferSize = bufferSize;
@@ -86,12 +89,12 @@ public final class BackpressureBatchesBufferStrategy implements
         volatile boolean done;
         Throwable error;
 
-        final Consumer<java.util.List<String>> onOverflow;
+        final Consumer<List<String>> onOverflow;
 
         final boolean captureBackpressureData;
 
         OnBackpressureBufferStrategySubscriber(Subscriber<? super AbstractWriteClient.BatchWriteItem> actual,
-                                               Consumer<java.util.List<String>> onOverflow,
+                                               Consumer<List<String>> onOverflow,
                                                BackpressureOverflowStrategy strategy,
                                                long bufferSize,
                                                boolean captureBackpressureData) {
@@ -123,7 +126,7 @@ public final class BackpressureBatchesBufferStrategy implements
             boolean callOnOverflow = false;
             boolean callError = false;
             Deque<AbstractWriteClient.BatchWriteItem> dq = deque;
-            java.util.List<String> overflowSnapshot = null;
+            List<String> overflowSnapshot = null;
             synchronized (dq) {
                 AtomicLong size = new AtomicLong(t.length());
                 dq.forEach(batchWriteItem -> size.addAndGet(batchWriteItem.length()));
@@ -158,7 +161,7 @@ public final class BackpressureBatchesBufferStrategy implements
             if (callOnOverflow) {
                 if (onOverflow != null) {
                     try {
-                        java.util.List<String> bufferedPoints;
+                        List<String> bufferedPoints;
                         if (captureBackpressureData && overflowSnapshot != null) {
                             bufferedPoints = overflowSnapshot;
                         } else {
@@ -187,23 +190,16 @@ public final class BackpressureBatchesBufferStrategy implements
          * @param item the batch item to capture
          * @return list of line protocol points from the item
          */
-        java.util.List<String> captureBatch(AbstractWriteClient.BatchWriteItem item) {
-            java.util.List<String> lineProtocols = new java.util.ArrayList<>();
-            addBatchItemToSnapshot(item, lineProtocols);
-            return lineProtocols;
-        }
-
-        private void addBatchItemToSnapshot(AbstractWriteClient.BatchWriteItem item, java.util.List<String> list) {
+        List<String> captureBatch(AbstractWriteClient.BatchWriteItem item) {
             String lp = item.toLineProtocol();
-            if (lp != null && !lp.isEmpty()) {
-                String[] points = lp.split("\n");
-                for (String point : points) {
-                    String trimmed = point.trim();
-                    if (!trimmed.isEmpty()) {
-                        list.add(trimmed);
-                    }
-                }
+            if (lp == null || lp.isEmpty()) {
+                return Collections.emptyList();
             }
+            
+            return Arrays.stream(lp.split("\n"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
         }
 
         @Override
