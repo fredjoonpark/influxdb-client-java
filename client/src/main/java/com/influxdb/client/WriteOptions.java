@@ -179,8 +179,7 @@ public final class WriteOptions implements WriteApi.RetryOptions {
 
     /**
      * The number of upstream items to prefetch so that fresh items are ready to be mapped when a previous
-     * MaybeSource terminates. The operator replenishes after half of the prefetch amount has been consumed
-     * and turned into MaybeSources.
+     * MaybeSource terminates.
      *
      * @return the prefetch value for concatMapMaybe operator
      * @see WriteOptions.Builder#concatMapPrefetch(int)
@@ -393,8 +392,7 @@ public final class WriteOptions implements WriteApi.RetryOptions {
          * Set the prefetch value for the concatMapMaybe operator that processes write batches.
          *
          * The number of upstream items to prefetch so that fresh items are ready to be mapped when a previous
-         * MaybeSource terminates. The operator replenishes after half of the prefetch amount has been consumed
-         * and turned into MaybeSources.
+         * MaybeSource terminates.
          *
          * @param concatMapPrefetch the prefetch value for concatMapMaybe operator (must be positive)
          * @return {@code this}

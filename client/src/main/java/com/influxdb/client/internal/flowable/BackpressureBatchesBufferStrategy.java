@@ -1,5 +1,6 @@
 package com.influxdb.client.internal.flowable;
 
+import java.util.Collections;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -155,14 +156,13 @@ public final class BackpressureBatchesBufferStrategy implements
             }
 
             if (callOnOverflow) {
-
                 if (onOverflow != null) {
                     try {
                         java.util.List<String> bufferedPoints;
                         if (captureBackpressureData && overflowSnapshot != null) {
                             bufferedPoints = overflowSnapshot;
                         } else {
-                            bufferedPoints = new java.util.ArrayList<>();
+                            bufferedPoints = Collections.emptyList();
                         }
                         onOverflow.accept(bufferedPoints);
                     } catch (Throwable ex) {
